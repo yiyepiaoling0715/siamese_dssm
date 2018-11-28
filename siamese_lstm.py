@@ -47,6 +47,21 @@ class SiameseBiLstm(object):
         tmp2 = (1 - y) * tf.log(tf.maximum(1-Ew,0))
         # return tf.reduce_sum(tmp1 + tmp2)
         return cross_entropy
+    def score01(self,d1,d2):
+        with tf.variable_scope('calculation'):
+            numberator = tf.sqrt(tf.reduce_sum(tf.multiply(d1, d2), axis=1))
+            denominator1 = tf.sqrt(tf.reduce_sum(tf.square(d1), axis=1))
+            denominator2 = tf.sqrt(tf.reduce_sum(tf.square(d2), axis=1))
+            Ew = 2 * numberator / (denominator1 * denominator2)
+            return Ew
+    def score(self,d1,d2):
+        # with tf.variable_scope('calculation'):
+        numberator = tf.reduce_sum(tf.multiply(d1, d2), axis=1)
+        denominator1 = tf.sqrt(tf.reduce_sum(tf.square(d1), axis=1))
+        denominator2 = tf.sqrt(tf.reduce_sum(tf.square(d2), axis=1))
+        Ew = numberator / (denominator1 * denominator2)
+        return Ew
+
     def __init__(self, rnn_size, layer_size
                  , vocab_size, sequence_length, grad_clip):
         print('sequence_length==>',sequence_length)
@@ -92,10 +107,11 @@ class SiameseBiLstm(object):
             d2 = tf.nn.xw_plus_b(output2, weight_fc2, bias_fc2, name='d2')
             d2=tf.nn.relu(d2)
         with tf.variable_scope('calculation'):
-            numberator = tf.sqrt(tf.reduce_sum(tf.multiply(d1, d2), axis=1))
-            denominator1 = tf.sqrt(tf.reduce_sum(tf.square(d1), axis=1))
-            denominator2 = tf.sqrt(tf.reduce_sum(tf.square(d2), axis=1))
-            Ew = 2 * numberator / (denominator1 * denominator2)
+            Ew=self.score(d1,d2)
+            # numberator = tf.sqrt(tf.reduce_sum(tf.multiply(d1, d2), axis=1))
+            # denominator1 = tf.sqrt(tf.reduce_sum(tf.square(d1), axis=1))
+            # denominator2 = tf.sqrt(tf.reduce_sum(tf.square(d2), axis=1))
+            # Ew = 2 * numberator / (denominator1 * denominator2)
             # self.Ew_see=Ew
             # Ew=tf.nn.sigmoid(Ew)
         with tf.variable_scope('loss'):
