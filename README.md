@@ -18,3 +18,5 @@ v4.0
  
  
  目前处于v1.0阶段
+ 入口文件：train.py
+ 语料：corpus.txt
