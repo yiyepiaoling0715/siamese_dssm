@@ -4,11 +4,11 @@ from siamese_lstm import SiameseBiLstm
 from data_helper import InputHelper
 import random
 
-tf.flags.DEFINE_integer('rnn_size', 128, 'hidden units of RNN , as well as dimensionality of character embedding (default: 100)')
+tf.flags.DEFINE_integer('rnn_size', 16, 'hidden units of RNN , as well as dimensionality of character embedding (default: 100)')
 tf.flags.DEFINE_float('dropout_keep_prob', 0.5, 'Dropout keep probability (default : 0.5)')
-tf.flags.DEFINE_integer('layer_size', 4, 'number of layers of RNN (default: 2)')
+tf.flags.DEFINE_integer('layer_size', 2, 'number of layers of RNN (default: 2)')
 tf.flags.DEFINE_integer('batch_size', 128, 'Batch Size (default : 32)')
-tf.flags.DEFINE_integer('sequence_length', 30, 'Sequence length (default : 32)')
+tf.flags.DEFINE_integer('sequence_length', 20, 'Sequence length (default : 32)')
 tf.flags.DEFINE_float('grad_clip', 5.0, 'clip gradients at this value')
 tf.flags.DEFINE_integer("num_epochs", 30, 'Number of training epochs (default: 200)')
 tf.flags.DEFINE_float('learning_rate', 0.002, 'learning rate')
