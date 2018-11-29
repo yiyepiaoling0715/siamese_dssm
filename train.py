@@ -1,6 +1,8 @@
+import os
 import tensorflow as tf
 from siamese_lstm import SiameseBiLstm
 from data_helper import InputHelper
+import random
 
 tf.flags.DEFINE_integer('rnn_size', 128, 'hidden units of RNN , as well as dimensionality of character embedding (default: 100)')
 tf.flags.DEFINE_float('dropout_keep_prob', 0.5, 'Dropout keep probability (default : 0.5)')
@@ -14,15 +16,18 @@ tf.flags.DEFINE_float('decay_rate', 0.97, 'decay rate for rmsprop')
 tf.flags.DEFINE_string('train_file', 'train.txt', 'train raw file')
 tf.flags.DEFINE_string('test_file', 'test.txt', 'train raw file')
 tf.flags.DEFINE_string('data_dir', './data', 'data directory')
-tf.flags.DEFINE_string('save_dir', 'save', 'model save directory')
+tf.flags.DEFINE_string('save_dir', '../data/model/', 'model save directory')
+tf.flags.DEFINE_string('model_name', 'siamese_model', 'model save directory')
 tf.flags.DEFINE_string('log_dir', 'log', 'log directory')
 tf.flags.DEFINE_string('input_file', 'corpus.txt', 'log directory')
 tf.flags.DEFINE_string('init_from', None, 'continue training from saved model at this path')
-tf.flags.DEFINE_string('epoches', 10, 'continue training from saved model at this path')
+tf.flags.DEFINE_string('epoches', 1000, 'continue training from saved model at this path')
 FLAGS = tf.app.flags.FLAGS
 
 best_loss = 9999
-
+if not os.path.exists(FLAGS.save_dir):
+    os.makedirs(FLAGS.save_dir)
+savepath=FLAGS.save_dir+FLAGS.model_name
 def main(_):
     def feed_back(x1_in, x2_in, y_in, dropout_in):
         # print('batch_iter==>',batch_iter)
@@ -34,7 +39,10 @@ def main(_):
         return {sbl.input_x1: x1_in, sbl.input_x2: x2_in, sbl.input_y: y_in, sbl.dropout_keep_prob: dropout_in}
 
     def train_step(batch_in):
-        batches = feed_back(batch_in[0], batch_in[1], batch_in[2], FLAGS.dropout_keep_prob)
+        if random.random()<0.5:
+            batches = feed_back(batch_in[0], batch_in[1], batch_in[2], FLAGS.dropout_keep_prob)
+        else:
+            batches = feed_back(batch_in[1], batch_in[0], batch_in[2], FLAGS.dropout_keep_prob)
         loss, merged_result, _ = sess.run([sbl.loss, merged, sbl.optimizer], feed_dict=batches)
         writer.add_summary(merged_result)
 
@@ -50,11 +58,11 @@ def main(_):
             loss_counter[1] += 1
         loss_average = loss_counter[0] / loss_counter[1]
         if loss_average<best_loss:
-            saver.save(sess, FLAGS.save_dir)
+            saver.save(sess, savepath)
             best_loss=loss_average
         print('测试:\tloss_average:\t{}\t'.format(loss_average))
 
-    datahelper = InputHelper(FLAGS.data_dir, FLAGS.input_file, FLAGS.batch_size, FLAGS.sequence_length, 0.9,is_train=True)
+    datahelper = InputHelper(FLAGS.data_dir, FLAGS.input_file, FLAGS.batch_size, FLAGS.sequence_length, 0.99,is_train=True)
     vocab_size =datahelper.vocab_size
     # with tf.Graph().as_default():
     counter = 0
@@ -64,15 +72,20 @@ def main(_):
             allow_soft_placement=True,
             log_device_placement=False)
         session_conf.gpu_options.allow_growth = True
+
+
         sess = tf.Session(config=session_conf)
         with sess.as_default():
+            writer = tf.summary.FileWriter(FLAGS.data_dir, graph=sess.graph)
             sbl = SiameseBiLstm(FLAGS.rnn_size, FLAGS.layer_size, vocab_size, FLAGS.sequence_length, FLAGS.grad_clip)
+            # if os.path.exists(savepath+'.meta'):
+            saver = tf.train.Saver()
+            if tf.train.checkpoint_exists(savepath):
+                print('加载已经保存的模型，保存路径\t{}'.format(str(savepath)))
+                saver.restore(sess,savepath)
 
             tf.summary.scalar(tensor=sbl.loss, name='loss')
             merged = tf.summary.merge_all()
-
-            writer=tf.summary.FileWriter(FLAGS.data_dir, graph=sess.graph)
-            saver=tf.train.Saver()
 
             sess.run(tf.global_variables_initializer())
             for epoch in range(FLAGS.epoches):

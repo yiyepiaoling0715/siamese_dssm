@@ -106,6 +106,8 @@ class SiameseBiLstm(object):
             bias_fc2 = self.bias_variables([128], 'bias_fc2')
             d2 = tf.nn.xw_plus_b(output2, weight_fc2, bias_fc2, name='d2')
             d2=tf.nn.relu(d2)
+        self.d1=d1
+        self.d2=d2
         with tf.variable_scope('calculation'):
             Ew=self.score(d1,d2)
             # numberator = tf.sqrt(tf.reduce_sum(tf.multiply(d1, d2), axis=1))
