@@ -69,6 +69,9 @@ class SiameseBiLstm(object):
         self.input_x2 = tf.placeholder(dtype=tf.int32, shape=[None, sequence_length], name='input_x2')
         self.input_y = tf.placeholder(dtype=tf.float32, shape=[None], name='input_y')
         self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
+        self.l2_reg_lambda=0.05
+        self.l2_loss=tf.constant(0,dtype=tf.float32)
+
         with tf.variable_scope('embedding'):
             # shape,  mean=0.0,  stddev=1.0,   dtype=dtypes.float32
             embedding_initial_value = tf.truncated_normal(shape=[vocab_size, rnn_size], mean=0.0, stddev=0.5)
@@ -76,6 +79,7 @@ class SiameseBiLstm(object):
                                            validate_shape=True,
                                            caching_device=None, name='embedding_matrix', variable_def=None,
                                            dtype=tf.float32, expected_shape=None, import_scope=None)
+            self.l2_loss+=tf.nn.l2_loss(embedding_matrix)
             embedding_x1 = tf.nn.embedding_lookup(embedding_matrix, self.input_x1, partition_strategy="mod", name=None,
                                                   validate_indices=True, max_norm=None)
             embedding_x2 = tf.nn.embedding_lookup(embedding_matrix, self.input_x2, partition_strategy="mod", name=None,
@@ -100,11 +104,13 @@ class SiameseBiLstm(object):
             weight_fc1 = self.weight_variables([2 * rnn_size, 128], 'weight_fc1')
             bias_fc1 = self.bias_variables([128], 'bias_fc1')
             d1 = tf.nn.xw_plus_b(output1, weight_fc1, bias_fc1, name='d1')
+            self.l2_loss+=tf.nn.l2_loss(weight_fc1)
             d1=tf.nn.relu(d1)
         with tf.variable_scope('fc2'):
             weight_fc2 = self.weight_variables([2 * rnn_size, 128], 'weight_fc2')
             bias_fc2 = self.bias_variables([128], 'bias_fc2')
             d2 = tf.nn.xw_plus_b(output2, weight_fc2, bias_fc2, name='d2')
+            self.l2_loss+=tf.nn.l2_loss(weight_fc2)
             d2=tf.nn.relu(d2)
         self.d1=d1
         self.d2=d2
@@ -117,7 +123,8 @@ class SiameseBiLstm(object):
             # self.Ew_see=Ew
             # Ew=tf.nn.sigmoid(Ew)
         with tf.variable_scope('loss'):
-            self.loss = self.contrastive_loss(Ew, self.input_y)
+            self.loss_pure=self.contrastive_loss(Ew, self.input_y)
+            self.loss = self.loss_pure+self.l2_loss
         with tf.variable_scope('train'):
             variables = tf.trainable_variables()
             grads = tf.gradients(self.loss, variables)

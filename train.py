@@ -43,7 +43,7 @@ def main(_):
             batches = feed_back(batch_in[0], batch_in[1], batch_in[2], FLAGS.dropout_keep_prob)
         else:
             batches = feed_back(batch_in[1], batch_in[0], batch_in[2], FLAGS.dropout_keep_prob)
-        loss, merged_result, _ = sess.run([sbl.loss, merged, sbl.optimizer], feed_dict=batches)
+        loss, merged_result, _ = sess.run([sbl.loss_pure, merged, sbl.optimizer], feed_dict=batches)
         writer.add_summary(merged_result)
 
     def dev_step():
@@ -52,7 +52,7 @@ def main(_):
         print('进入测试阶段')
         for batch_iter_test in datahelper.next_batch(train_or_test='test', random=True):
             batches_test = feed_back(batch_iter_test[0], batch_iter_test[1], batch_iter_test[2], 1.0)
-            loss_test, merged_result_test, _ = sess.run([sbl.loss, merged, sbl.optimizer],
+            loss_test, merged_result_test, _ = sess.run([sbl.loss_pure, merged, sbl.optimizer],
                                                         feed_dict=batches_test)
             loss_counter[0] += loss_test
             loss_counter[1] += 1
