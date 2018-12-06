@@ -16,7 +16,7 @@ class SiameseBiLstm(object):
         return dropoutcells_fw, dropoutcells_bw
 
     def weight_variables(self, shape, name):
-        initial_value = tf.truncated_normal(shape, mean=0.0, stddev=0.1, dtype=tf.float32)
+        initial_value = tf.truncated_normal(shape, mean=0.0, stddev=0.3, dtype=tf.float32)
         variable = tf.Variable(initial_value=initial_value, trainable=True,name=name,dtype=tf.float32)
         return variable
 
@@ -79,7 +79,7 @@ class SiameseBiLstm(object):
                                            validate_shape=True,
                                            caching_device=None, name='embedding_matrix', variable_def=None,
                                            dtype=tf.float32, expected_shape=None, import_scope=None)
-            self.l2_loss+=tf.nn.l2_loss(embedding_matrix)
+            # self.l2_loss+=tf.nn.l2_loss(embedding_matrix)
             embedding_x1 = tf.nn.embedding_lookup(embedding_matrix, self.input_x1, partition_strategy="mod", name=None,
                                                   validate_indices=True, max_norm=None)
             embedding_x2 = tf.nn.embedding_lookup(embedding_matrix, self.input_x2, partition_strategy="mod", name=None,
@@ -101,14 +101,14 @@ class SiameseBiLstm(object):
 
         with tf.variable_scope('fc1'):
             # todo w shape 再斟酌一下
-            weight_fc1 = self.weight_variables([2 * rnn_size, 128], 'weight_fc1')
-            bias_fc1 = self.bias_variables([128], 'bias_fc1')
+            weight_fc1 = self.weight_variables([2 * rnn_size, 32], 'weight_fc1')
+            bias_fc1 = self.bias_variables([32], 'bias_fc1')
             d1 = tf.nn.xw_plus_b(output1, weight_fc1, bias_fc1, name='d1')
             self.l2_loss+=tf.nn.l2_loss(weight_fc1)
             d1=tf.nn.relu(d1)
         with tf.variable_scope('fc2'):
-            weight_fc2 = self.weight_variables([2 * rnn_size, 128], 'weight_fc2')
-            bias_fc2 = self.bias_variables([128], 'bias_fc2')
+            weight_fc2 = self.weight_variables([2 * rnn_size, 32], 'weight_fc2')
+            bias_fc2 = self.bias_variables([32], 'bias_fc2')
             d2 = tf.nn.xw_plus_b(output2, weight_fc2, bias_fc2, name='d2')
             self.l2_loss+=tf.nn.l2_loss(weight_fc2)
             d2=tf.nn.relu(d2)
