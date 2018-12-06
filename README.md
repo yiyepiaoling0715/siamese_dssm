@@ -17,7 +17,7 @@ v4.0
     dssm和 siamese融合，强化句子相似度排序
  
  
- 目前处于v2.0阶段
+ 目前处于v3.0阶段
  
  入口文件：train.py     执行方式：python train.py
  句向量召回测试：    infer.py
@@ -30,7 +30,6 @@ v4.0
     tensorflow=1.3.0
 
 优化方式：
-<<<<<<< HEAD
     目前已做优化：
         
         1.余弦距离计算方式完善
